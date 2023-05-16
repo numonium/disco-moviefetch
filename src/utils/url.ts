@@ -1,4 +1,4 @@
-export const isValidURL = (url) => {
+export const isValidURL = (url: string) => {
   try {
     new URL(url);
   } catch (e) {
@@ -10,7 +10,7 @@ export const isValidURL = (url) => {
 
 export const isExternalURL = (
   href: string,
-  loc: typeof location = location
+  loc: Location
 ) => {
   if(!document) {
     return isExternalURL2(href, loc);
@@ -24,7 +24,7 @@ export const isExternalURL = (
 
 export const isExternalURL2 = (
   href: string,
-  loc: typeof location = location
+  loc: Location
 ) => (
   isValidURL(href) && (
     (new URL(href)).origin !== loc.origin

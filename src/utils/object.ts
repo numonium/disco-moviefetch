@@ -1,7 +1,7 @@
 import { isString, random } from "~utils";
 
-export const cloneWithDefault = (obj, defaultVal) => {
-  const ret = {};
+export const cloneWithDefault = (obj: Object, defaultVal: any) => {
+  const ret: Record<any, any> = {};
 
   for(const [key] of Object.entries(obj)) {
     ret[key] = defaultVal;
@@ -18,7 +18,7 @@ export const enumValues = <O extends object, K extends O = O>(obj: O): K[] => (
   Object.values(obj).filter(k => Number.isNaN(+k)) as K[]
 );
 
-export const length = (obj) => (
+export const length = (obj: Object) => (
   Object.keys(obj).length
 );
 
@@ -29,16 +29,16 @@ export const firstKey = <T extends object>(obj: T) => {
 };
 
 export const first = <T extends object>(obj: T) => {
-  const keys = Object.keys(obj);
+  const keys: Array<any> = Object.keys(obj);
 
   return (keys.length && obj[keys.shift()]);
 };
 
-export const jsonClone = (obj) => (
+export const jsonClone = (obj: Object) => (
   JSON.parse(JSON.stringify(obj))
 );
 
-export const randomKey = (obj) => {
+export const randomKey = (obj: Object) => {
   const keys = Object.keys(obj);
 
   if(!(keys && keys.length)) {
@@ -48,7 +48,7 @@ export const randomKey = (obj) => {
   return random(0, keys.length - 1);
 }
 
-export const randomItem = (obj) => {
+export const randomItem = (obj: Record<any, any>) => {
   const key = randomKey(obj);
 
   if(key !== false) {
@@ -58,7 +58,7 @@ export const randomItem = (obj) => {
   return key;
 }
 
-export const rectClone = (rect?: DOMRect, overrides?: Partial<DOMRect>) => {
+export const rectClone = (rect: DOMRect, overrides?: Partial<DOMRect>) => {
   const _rect = (!!overrides ? {
     ...jsonClone(rect),
     ...overrides
@@ -79,7 +79,7 @@ export const rectValid = (rect?: DOMRect) => {
   );
 }
 
-export const restucture = (obj) => {
+export const restucture = (obj: Object) => {
   const {
     ...rest
   } = obj;
@@ -87,7 +87,7 @@ export const restucture = (obj) => {
   return rest;
 }
 
-export const isObject = (o) => (
+export const isObject = (o: Object) => (
   o === Object(o) && !Array.isArray(o) && typeof o !== 'function'
 );
 

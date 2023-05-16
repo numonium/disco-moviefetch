@@ -7,23 +7,23 @@ export const isString = (str: any) => (
 
 export const makeUUID = uuid;
 
-export const ucwords = str => (' '+str).replace(/ [\w]/g, a => a.toLocaleUpperCase()).trim();
+export const ucwords = (str: string) => (' '+str).replace(/ [\w]/g, a => a.toLocaleUpperCase()).trim();
 
 /**
  * @NOTE -- adapted from @parshap/truncate-utf8-bytes
  */
-export const isHighSurrogate = (codePoint) => (
+export const isHighSurrogate = (codePoint: number) => (
   codePoint >= 0xd800 && codePoint <= 0xdbff
 );
 
-export const isLowSurrogate = (codePoint) => (
+export const isLowSurrogate = (codePoint: number) => (
   codePoint >= 0xdc00 && codePoint <= 0xdfff
 );
 
 // Truncate string by size in bytes
 export const truncate = (
-  string,
-  byteLength,
+  string: string,
+  byteLength: number,
   getLength = Buffer.byteLength.bind(Buffer)
 ) => {
   if (typeof string !== "string") {
