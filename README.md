@@ -4,7 +4,7 @@ This quick application shows **trending movie and TV shows** as provided by The 
 
 ## Running the App
 
-To run, simply execute `yarn start` and open `http://localhost:3000` in your web browser.
+To run, simply execute `yarn && yarn start` and open `http://localhost:3000` in your web browser.
 
 From there, simply use the arrow keys to select a movie or TV show of your liking.
 
