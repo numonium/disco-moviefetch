@@ -1,0 +1,6 @@
+{
+  "singleQuote": true,
+  "semi": true,
+  "quoteProps": "preserve",
+  "trailingComma": "none"
+}
