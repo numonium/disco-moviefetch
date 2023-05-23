@@ -1,45 +1,46 @@
-export const bounds = (num, start, end) => {
-  if(start === end) {
-    return start;
-  }
+// export const bounds = (num, start, end) => {
+//   if(start === end) {
+//     return start;
+//   }
 
-  let _start = start, _end = end;
+//   let _start = start, _end = end;
 
-  if(end < start) {
-    _start = end;
-    _end = start;
-  }
+//   if(end < start) {
+//     _start = end;
+//     _end = start;
+//   }
 
-  if(num < _start) {
-    return _start;
-  }
+//   if(num < _start) {
+//     return _start;
+//   }
 
-  if(num > _end) {
-    return _end;
-  }
+//   if(num > _end) {
+//     return _end;
+//   }
 
-  return num;
-}
+//   return num;
+// }
 
-export const isNull = (x) => (
-  (x === null) ||
-  (typeof x === 'undefined') ||
-  isNaN(x)
-);
+// export const isNull = (x?: number) => (
+//   (x === null) ||
+//   (typeof x === 'undefined') ||
+//   isNaN(x)
+// );
 
-export const random = (min: number, max: number) => (
-  Math.floor(Math.random() * (max - min) + min)
-);
+export const modWrap = (x: number, max: number) => ((x % max) + max) % max;
 
-export const range = (start: number, end: number) => {
-  if(end == null) {
-      end = start;
-      start = 0;
-  }
+export const random = (min: number, max: number) =>
+  Math.floor(Math.random() * (max - min) + min);
 
-  // return Math.random() * (end - start) + start;
-  return random(start, end);
-};
+// export const range = (start: number, end: number) => {
+//   if(end == null) {
+//       end = start;
+//       start = 0;
+//   }
+
+//   // return Math.random() * (end - start) + start;
+//   return random(start, end);
+// };
 
 /**
  * @function strPercent
@@ -47,7 +48,8 @@ export const range = (start: number, end: number) => {
  * @param str percentage (string with "%" sign)
  * @param total
  * @returns (float) percentage of `total`
- */
+ *\/
 export const strPercent = (str: string, total: number) => (
   (parseFloat(str) / 100) * total
 );
+*/
