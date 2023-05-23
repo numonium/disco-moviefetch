@@ -2,11 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -18,30 +14,17 @@
     "noEmit": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "~assets/*": [
-        "src/assets/*"
-      ],
-      "~components/*": [
-        "src/components/*"
-      ],
-      "~themes": [
-        "src/themes"
-      ],
-      "~themes/*": [
-        "src/themes/*"
-      ],
-      "~utils": [
-        "src/utils"
-      ],
-      "~utils/*": [
-        "src/utils/*"
-      ]
+      "~assets/*": ["src/assets/*"],
+      "~components": ["src/components"],
+      "~components/*": ["src/components/*"],
+      "~themes": ["src/themes"],
+      "~themes/*": ["src/themes/*"],
+      "~utils": ["src/utils"],
+      "~utils/*": ["src/utils/*"]
     },
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "strict": true,
+    "strict": true
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }
