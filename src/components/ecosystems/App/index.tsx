@@ -27,7 +27,6 @@ import {
 } from '~utils';
 import { TMDBMediaType, TMDBTimeWindow, useTMDB } from '~utils/hooks';
 
-
 import './index.css';
 import * as Styles from './styles';
 
@@ -67,19 +66,11 @@ export const App = () => {
     createGroup() // row 2
   ];
 
-
-  const registerGroup = () => {
-    const group = createGroup();
-
-    refMap.push(group);
-  }
-
   // store length of each row
   const itemsMap = useRef<number[]>([]);
 
   // store x (horiz) position of each row, default to 0
   const rowPosMap = useRef(Array(refMap.length).fill(0));
-
   const [mediaType, setMediaType] = useState<TMDBMediaType>(TMDBMediaType.movie)
 
   const mediaTypeLabel = useMemo(() => (
@@ -94,10 +85,6 @@ export const App = () => {
 
   // list of items ... [[item, ..., item], [...]]
   const itemsRef = useRef<Array<NodeListOf<Element>>>([]);
-
-  // list of rows ... [row, row]
-  const rowsRef = useRef<NodeListOf<Element>>();
-  const resultsRef = useRef<HTMLDivElement | null>(null);
   const coordsRef = useRef<CoordsType>({ x: 0, y: 0 });
 
   const nextDirection = ({
@@ -133,7 +120,6 @@ export const App = () => {
     });
 
     const numRows = itemsRef.current?.length || 0;
-    const numItems = itemsRef.current[y]?.length || 0;
 
     const newCoords = {
       x,
@@ -157,11 +143,11 @@ export const App = () => {
       newCoords.x = newCoords.x + 1;
     }
 
-    /** */
     newCoords.y = modWrap(newCoords.y, numRows);
 
     /**
      * @NOTE -- since rows may have different length,
+     *  we need
      *\/
     newCoords.x = (
       newCoords.x >= itemsRef.current[newCoords.y].length
@@ -189,7 +175,7 @@ export const App = () => {
      */
     if(GRID_SCROLL || (newCoords.y === y)) {
       newCoords.x = (
-        newCoords.x >= itemsRef.current[newCoords.y].length
+        WRAP_SCROLL && (newCoords.x >= itemsRef.current[newCoords.y].length)
           ? itemsRef.current[newCoords.y].length - 1
           : modWrap(newCoords.x, itemsRef.current[newCoords.y].length)
       );
@@ -262,11 +248,6 @@ export const App = () => {
 
         const _chunks = arrayChunk<MovieWithMediaType | TVWithMediaType>(_results, ROW_LENGTH).slice(0, NUM_ROWS);
 
-        // _chunks.map((row, i) => {
-        //   const g = registerGroup();
-        //   console.error('** gg', g);
-        // })
-
         setResults(_results);
         setResultChunks(_chunks);
         setReady(true);
@@ -298,35 +279,20 @@ export const App = () => {
   }, [mediaType, results, ready]);
 
   /**
-   * @NOTE -- don't use dom
-   *  - we shouldn't directly interface with the DOM here,
-   *    rather, abstract elements to refs + react components
-   *  - for brevity (time limit) and to avoid further complications,
-   *    we're "hacking" the dom here to quickly determine
-   *    the next focusable element
+   * @NOTE -- data mapping
+   *  - create grid of tabbable elements
    */
   useEffect(() => {
     if (ready) {
-      console.warn('** refs', refMap);
-
       if (refMap.length) {
         for(let i = 0; i < refMap.length; i++) {
-          console.warn('** refs/row', {
-            i, current: refMap[i]
-          });
-
           const val = refMap[i];
 
           /* get tabbable elements from row */
-          // if(val.current) {
-          //   if(i === 'results') {
-          //     const rows = val.current.querySelectorAll('data-row')
-          //   }
-            itemsRef.current[i] = val.current.querySelectorAll(tabbableElements);
+          itemsRef.current[i] = val.current.querySelectorAll(tabbableElements);
 
-            // store length of row to allow for safe 2d nav
-            itemsMap.current[i] = itemsRef.current[i].length;
-          // }
+          // store length of row to allow for safe 2d nav
+          itemsMap.current[i] = itemsRef.current[i].length;
         }
 
         console.warn('** refs/item', {
@@ -358,18 +324,14 @@ export const App = () => {
     ({
       data,
       children,
-      max = 5,
-      key = 0
+      max = 5
     }: OptionalChildrenProps & {
       data: CardType[];
       max?: number;
-      key?: number;
     }) => {
       const _data = max ? data.slice(0, max) : data;
 
       // the refs in `refsMap` should sequentally equate to the render order
-      // const _ref = refMap[key];
-
       const ret = _data.map((item: CardType, i: number) => (
         <RailItem key={i}>
           <Card data={item} />
@@ -377,50 +339,10 @@ export const App = () => {
         </RailItem>
       ));
 
-      // return <Rail data-row ref={_ref}>{ret}</Rail>;
       return ret;
     },
     []
   );
-
-  const renderRows = useCallback(({
-    chunks,
-    maxRows = NUM_ROWS
-  }: {
-    chunks: CardType[][];
-    maxRows?: number;
-  }) => {
-    const _chunks = chunks.slice(0, maxRows);
-    const rows = _chunks.map((chunk, i) => {
-      const r = renderItems({
-        data: chunk,
-        key: i
-      })
-
-      console.warn('** row', {
-        r, chunk
-      });
-
-      return r;
-    })
-
-    return rows;
-  }, [resultChunks]);
-
-  // const rows = (ready ? renderRows({
-  //   chunks: resultChunks
-  // }) : []);
-
-  // const _renderChunks = resultChunks.slice(0, NUM_ROWS);
-
-  // const rows = _renderChunks.map((chunk, i) => {
-  //   renderItems({
-  //     data: chunk
-  //   })
-  // });
-
-  console.warn('** chunks', refMap);
-
 
   return (
     <Content className="App">
@@ -428,7 +350,7 @@ export const App = () => {
       <Styles.StyledHeader>
         <Logo />
       </Styles.StyledHeader>
-      <main /*ref={refMap.root}*/>
+      <main>
         <section>
           <QueryBox handleSelect={handleSelect} ref={refMap[0]} />
           <div className="results">
@@ -449,28 +371,12 @@ export const App = () => {
                     })
                   }
                 </Rail>
-                {/* {rows} */}
-                  {/* {renderItems({
-                    data: results
-                  })} */}
               </>
             ) : ready ? (
               <strong>No {mediaTypeLabel} results!</strong>
             ) : (
               <h2>Loading Trending Movies&hellip;</h2>
             )}
-            {/*tvReady && tvResults.length ? (
-              <>
-                <h2>Trending TV Shows</h2>
-                {renderItems({
-                  data: tvResults
-                })}
-              </>
-            ) : tvReady ? (
-              <strong>No TV results!</strong>
-            ) : (
-              <h2>Loading Trending TV&hellip;</h2>
-            )*/}
           </div>
         </section>
       </main>
