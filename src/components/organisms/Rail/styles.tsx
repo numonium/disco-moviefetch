@@ -13,7 +13,7 @@ export const RailItems = styled.ul`
   min-height: 30vh;
   height: auto !important;
   margin: 0;
-  padding: 0 0 0 2vmax;
+  padding: 0 2vmax;
   flex-direction: row;
   list-style: none;
 `;

@@ -1,5 +1,5 @@
 import throttle from 'lodash.throttle';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { MouseEventHandler, createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MovieWithMediaType,
   TVWithMediaType,
@@ -9,6 +9,7 @@ import {
 import { Logo } from '~components/atoms/Logo';
 import Card, { CardType } from '~components/molecules/Card';
 import Content from '~components/molecules/Content';
+import { QueryBox } from '~components/molecules/QueryBox';
 import RailItem from '~components/molecules/RailItem';
 import Rail from '~components/organisms/Rail';
 
@@ -20,22 +21,68 @@ import {
   Keys,
   OptionalChildrenProps,
   TabbableNavDirections,
+  arrayChunk,
   modWrap,
   tabbableElements
 } from '~utils';
 import { TMDBMediaType, TMDBTimeWindow, useTMDB } from '~utils/hooks';
 
+
 import './index.css';
 import * as Styles from './styles';
+
+export const NUM_ROWS = 2;
+export const ROW_LENGTH = 5;
+
+export type RowRefType<T = HTMLDivElement> = React.MutableRefObject<T>;
 
 export const App = () => {
   const { tmdb } = useTMDB();
 
-  const [movieResults, setMovieResults] = useState<CardType[]>([]);
-  const [tvResults, setTVResults] = useState<CardType[]>([]);
+  // const refMap = {
+  //   // root: useRef() as React.MutableRefObject<HTMLDivElement>,
+  //   q: useRef() as React.MutableRefObject<HTMLDivElement>,
+  //   results: useRef() as React.RefObject<HTMLDivElement>
+  // };
 
-  const [movieReady, setMovieReady] = useState(false);
-  const [tvReady, setTVReady] = useState(false);
+  // const refMap: RowRefType<Array<RowRefType>> = useRef([]);
+
+  const createGroup = () => {
+    return createRef() as RowRefType;
+  }
+
+  const refMap: Array<RowRefType> = [
+    createGroup(), // query box
+    createGroup(), // row 1
+    createGroup() // row 2
+  ];
+
+
+  const registerGroup = () => {
+    const group = createGroup();
+
+    refMap.push(group);
+  }
+
+  const itemsMap = useRef<number[]>([]);
+
+  // const itemsMap = useRef<Record<string, number>>({
+  //   q: 0,
+  //   results: 0
+  // });
+
+
+  const [mediaType, setMediaType] = useState<TMDBMediaType>(TMDBMediaType.movie)
+
+  const mediaTypeLabel = useMemo(() => (
+    mediaType === TMDBMediaType.movie ? 'Movie' : 'TV Show'
+  ),[mediaType])
+
+  const [results, setResults] = useState<CardType[]>([]);
+  const [resultChunks, setResultChunks] = useState<CardType[][]>([]);
+
+  const [ready, setReady] = useState(false);
+  const initialLoad = useRef(false);
 
   // list of items ... [[item, ..., item], [...]]
   const itemsRef = useRef<Array<NodeListOf<Element>>>([]);
@@ -44,27 +91,6 @@ export const App = () => {
   const rowsRef = useRef<NodeListOf<Element>>();
   const resultsRef = useRef<HTMLDivElement | null>(null);
   const coordsRef = useRef<CoordsType>({ x: 0, y: 0 });
-
-  const setReady = (mediaType: TrendingMediaType, value: boolean) => {
-    if (mediaType === TMDBMediaType.movie) {
-      setMovieReady(value);
-    }
-    if (mediaType === TMDBMediaType.tv) {
-      setTVReady(value);
-    }
-  };
-
-  const setResults = (
-    mediaType: TrendingMediaType,
-    value: MovieWithMediaType[] | TVWithMediaType[]
-  ) => {
-    if (mediaType === TMDBMediaType.movie) {
-      setMovieResults(value);
-    }
-    if (mediaType === TMDBMediaType.tv) {
-      setTVResults(value);
-    }
-  };
 
   const nextDirection = ({
     keyCode,
@@ -119,8 +145,19 @@ export const App = () => {
       newCoords.x = newCoords.x + 1;
     }
 
-    newCoords.x = modWrap(newCoords.x, numItems);
+    // const itemsKey = Object.keys(itemsMap.current);
     newCoords.y = modWrap(newCoords.y, numRows);
+    // newCoords.x = modWrap(newCoords.x, numItems);
+
+    /**
+     * @NOTE -- since rows may have different length, we need to
+     */
+    newCoords.x = (
+      newCoords.x >= itemsRef.current[newCoords.y].length
+        ? itemsRef.current[newCoords.y].length - 1
+        : modWrap(newCoords.x, itemsRef.current[newCoords.y].length)
+    );
+
 
     coordsRef.current = { ...newCoords };
 
@@ -157,6 +194,16 @@ export const App = () => {
     [tmdb.trending]
   );
 
+  const handleSelect: MouseEventHandler<HTMLButtonElement> = (e) => {
+    const target = e.target as HTMLButtonElement;
+    const value = target.value as TMDBMediaType;
+
+    if(value !== mediaType) {
+      setMediaType(target.value as TMDBMediaType);
+      setReady(false);
+    }
+  }
+
   useEffect(() => {
     const query = async (mediaType: TrendingMediaType) => {
       try {
@@ -171,13 +218,28 @@ export const App = () => {
           throw new Error('** api/tmdb // no results');
         }
 
-        setResults(
-          mediaType,
-          mediaType === TMDBMediaType.movie
-            ? (res as MovieWithMediaType[])
-            : (res as TVWithMediaType[])
-        );
-        setReady(mediaType, true);
+        const _results = mediaType === TMDBMediaType.movie
+          ? (res as MovieWithMediaType[])
+          : (res as TVWithMediaType[])
+
+        const _chunks = arrayChunk<MovieWithMediaType | TVWithMediaType>(_results, ROW_LENGTH).slice(0, NUM_ROWS);
+
+        // _chunks.map((row, i) => {
+        //   const g = registerGroup();
+        //   console.error('** gg', g);
+        // })
+
+        setResults(_results);
+        setResultChunks(_chunks);
+        setReady(true);
+
+        console.warn('** !!', {
+          _chunks,
+          resultChunks,
+          _results,
+          results,
+          refMap
+        })
 
         return data;
       } catch (err) {
@@ -186,20 +248,16 @@ export const App = () => {
       }
     };
 
-    if (!movieReady) {
-      setReady(TMDBMediaType.movie, false);
-      query(TMDBMediaType.movie).then((data) => {
-        setReady(TMDBMediaType.movie, true);
+    if(!ready) {
+      query(mediaType).then((data) => {
+        setReady(true);
       });
     }
 
-    if (!tvReady) {
-      setReady(TMDBMediaType.tv, false);
-      query(TMDBMediaType.tv).then((data) => {
-        setReady(TMDBMediaType.movie, true);
-      });
+    return () => {
+      console.warn('** destroy', {...refMap})
     }
-  }, [getTrending, movieReady, tvReady]);
+  }, [mediaType, results, ready]);
 
   /**
    * @NOTE -- don't use dom
@@ -210,26 +268,45 @@ export const App = () => {
    *    the next focusable element
    */
   useEffect(() => {
-    if (movieReady && tvReady) {
-      if (resultsRef.current) {
-        const rows = resultsRef.current.querySelectorAll('[data-row]');
+    if (ready) {
+      console.warn('** refs', refMap);
 
-        if (!(rows && rows.length)) {
-          throw new Error('** no rows available');
+      if (refMap.length) {
+        for(let i = 0; i < refMap.length; i++) {
+          console.warn('** refs/row', {
+            i, current: refMap[i]
+          });
+
+          const val = refMap[i];
+
+          /* get tabbable elements from row */
+          // if(val.current) {
+          //   if(i === 'results') {
+          //     const rows = val.current.querySelectorAll('data-row')
+          //   }
+            itemsRef.current[i] = val.current.querySelectorAll(tabbableElements);
+
+            // store length of row to allow for safe 2d nav
+            itemsMap.current[i] = itemsRef.current[i].length;
+          // }
         }
 
-        rowsRef.current = rows;
-
-        rows.forEach((ele, i) => {
-          itemsRef.current[i] = rows[i].querySelectorAll(tabbableElements);
+        console.warn('** refs/item', {
+          itemsMap,
+          itemsRef
         });
 
         window.addEventListener('keydown', handleKeyDown);
-
+/*
         setTimeout(() => {
-          const next = itemsRef.current[0][0] as HTMLAnchorElement;
-          next?.focus();
-        }, 0);
+          if(!initialLoad.current) {
+            const next = itemsRef.current[0][0] as HTMLAnchorElement;
+
+            console.warn('** refs/next', ready, next);
+            next?.focus();
+            initialLoad.current = true;
+          }
+        }, 0);*/
       }
 
       return () => {
@@ -237,26 +314,75 @@ export const App = () => {
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-  }, [handleKeyDown, movieReady, tvReady, globalKeyDown]);
+  }, [handleKeyDown, globalKeyDown]);
 
   const renderItems = useCallback(
     ({
       data,
-      children
+      children,
+      max = 5,
+      key = 0
     }: OptionalChildrenProps & {
       data: CardType[];
+      max?: number;
+      key?: number;
     }) => {
-      const ret = data.map((item: CardType, i: number) => (
+      const _data = max ? data.slice(0, max) : data;
+
+      // the refs in `refsMap` should sequentally equate to the render order
+      // const _ref = refMap[key];
+
+      const ret = _data.map((item: CardType, i: number) => (
         <RailItem key={i}>
           <Card data={item} />
           {children}
         </RailItem>
       ));
 
-      return <Rail data-row>{ret}</Rail>;
+      // return <Rail data-row ref={_ref}>{ret}</Rail>;
+      return ret;
     },
     []
   );
+
+  const renderRows = useCallback(({
+    chunks,
+    maxRows = NUM_ROWS
+  }: {
+    chunks: CardType[][];
+    maxRows?: number;
+  }) => {
+    const _chunks = chunks.slice(0, maxRows);
+    const rows = _chunks.map((chunk, i) => {
+      const r = renderItems({
+        data: chunk,
+        key: i
+      })
+
+      console.warn('** row', {
+        r, chunk
+      });
+
+      return r;
+    })
+
+    return rows;
+  }, [resultChunks]);
+
+  // const rows = (ready ? renderRows({
+  //   chunks: resultChunks
+  // }) : []);
+
+  // const _renderChunks = resultChunks.slice(0, NUM_ROWS);
+
+  // const rows = _renderChunks.map((chunk, i) => {
+  //   renderItems({
+  //     data: chunk
+  //   })
+  // });
+
+  console.warn('** chunks', refMap);
+
 
   return (
     <Content className="App">
@@ -264,22 +390,38 @@ export const App = () => {
       <Styles.StyledHeader>
         <Logo />
       </Styles.StyledHeader>
-      <main>
+      <main /*ref={refMap.root}*/>
         <section>
-          <div className="results" ref={resultsRef}>
-            {movieReady && movieResults.length ? (
+          <QueryBox handleSelect={handleSelect} ref={refMap[0]} />
+          <div className="results">
+            {ready && results.length ? (
               <>
-                <h2>Trending Movies</h2>
-                {renderItems({
-                  data: movieResults
-                })}
+                <h2>Trending {mediaTypeLabel}s</h2>
+                <Rail data-row ref={refMap[2]}>
+                  {
+                    renderItems({
+                      data: resultChunks[0]
+                    })
+                  }
+                </Rail>
+                <Rail data-row ref={refMap[1]}>
+                  {
+                    renderItems({
+                      data: resultChunks[1]
+                    })
+                  }
+                </Rail>
+                {/* {rows} */}
+                  {/* {renderItems({
+                    data: results
+                  })} */}
               </>
-            ) : movieReady ? (
-              <strong>No movie results!</strong>
+            ) : ready ? (
+              <strong>No {mediaTypeLabel} results!</strong>
             ) : (
               <h2>Loading Trending Movies&hellip;</h2>
             )}
-            {tvReady && tvResults.length ? (
+            {/*tvReady && tvResults.length ? (
               <>
                 <h2>Trending TV Shows</h2>
                 {renderItems({
@@ -290,7 +432,7 @@ export const App = () => {
               <strong>No TV results!</strong>
             ) : (
               <h2>Loading Trending TV&hellip;</h2>
-            )}
+            )*/}
           </div>
         </section>
       </main>

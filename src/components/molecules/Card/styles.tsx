@@ -11,9 +11,7 @@ export const StyledCard = styled.a`
 
   background-color: rgba(127, 17, 224, 0);
 
-  &:hover {
-    background-color: #d411e0 !important;
-  }
+  pointer-events: none;
   &:focus,
   &:focus-visible,
   &:focus-within {
