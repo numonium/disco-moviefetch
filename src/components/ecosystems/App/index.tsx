@@ -132,10 +132,14 @@ export const App = () => {
       y
     };
 
-    if (dir === TabbableNavDirections.up) {
-      newCoords.y = newCoords.y + 1;
-    } else if (dir === TabbableNavDirections.down) {
-      newCoords.y = newCoords.y - 1;
+    if (dir === TabbableNavDirections.down) {
+      if(newCoords.y < numRows - 1) {
+        newCoords.y = newCoords.y + 1;
+      }
+    } else if (dir === TabbableNavDirections.up) {
+      if(newCoords.y > 0) {
+        newCoords.y = newCoords.y - 1;
+      }
     } else if (
       dir === TabbableNavDirections.left ||
       (e.keyCode === Keys.tab && e.shiftKey)
@@ -397,14 +401,14 @@ export const App = () => {
             {ready && results.length ? (
               <>
                 <h2>Trending {mediaTypeLabel}s</h2>
-                <Rail data-row ref={refMap[2]}>
+                <Rail data-row ref={refMap[1]}>
                   {
                     renderItems({
                       data: resultChunks[0]
                     })
                   }
                 </Rail>
-                <Rail data-row ref={refMap[1]}>
+                <Rail data-row ref={refMap[2]}>
                   {
                     renderItems({
                       data: resultChunks[1]
