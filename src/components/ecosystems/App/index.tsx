@@ -171,6 +171,7 @@ export const App = () => {
      */
     if (e.keyCode !== Keys.tab) {
       nextItem.focus();
+      nextItem.scrollIntoView();
     }
 
     return true;
