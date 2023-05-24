@@ -18,6 +18,7 @@ body {
 }
 
 h2 {
-  margin-left: 2vmax;
+  margin: 1em 2vmax;
   font-weight: 900;
+  text-align: center;
 }

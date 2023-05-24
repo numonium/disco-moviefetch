@@ -22,6 +22,7 @@ export const Card: React.FC<CardProps> = ({ children, data, tag = Tags.a }) => {
         <Styles.CardImage
           src={`https://www.themoviedb.org/t/p/w500${data.poster_path}`}
           alt={name}
+          height="100%"
         />
         <Styles.CardText>{name}</Styles.CardText>
       </Styles.CardContent>
