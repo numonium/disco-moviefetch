@@ -43,18 +43,19 @@ export const ROW_LENGTH = 5;
  */
 export const GRID_SCROLL = false;
 
+/**
+ * @NOTE -- wrap-around scrolling
+ *  - this flag controls whether vertival position will wrap
+ *    once focus reaches bottom of the page
+ *\/
+  export const WRAP_SCROLL = process.env.REACT_APP_WRAP_SCROLL ?? false;
+ */
+export const WRAP_SCROLL = false;
+
 export type RowRefType<T = HTMLDivElement> = React.MutableRefObject<T>;
 
 export const App = () => {
   const { tmdb } = useTMDB();
-
-  // const refMap = {
-  //   // root: useRef() as React.MutableRefObject<HTMLDivElement>,
-  //   q: useRef() as React.MutableRefObject<HTMLDivElement>,
-  //   results: useRef() as React.RefObject<HTMLDivElement>
-  // };
-
-  // const refMap: RowRefType<Array<RowRefType>> = useRef([]);
 
   const createGroup = () => {
     return createRef() as RowRefType;
@@ -140,11 +141,11 @@ export const App = () => {
     };
 
     if (dir === TabbableNavDirections.down) {
-      if(newCoords.y < numRows - 1) {
+      if(WRAP_SCROLL || (newCoords.y < numRows - 1)) {
         newCoords.y = newCoords.y + 1;
       }
     } else if (dir === TabbableNavDirections.up) {
-      if(newCoords.y > 0) {
+      if(WRAP_SCROLL || (newCoords.y > 0)) {
         newCoords.y = newCoords.y - 1;
       }
     } else if (
@@ -156,9 +157,8 @@ export const App = () => {
       newCoords.x = newCoords.x + 1;
     }
 
-    // const itemsKey = Object.keys(itemsMap.current);
+    /** */
     newCoords.y = modWrap(newCoords.y, numRows);
-    // newCoords.x = modWrap(newCoords.x, numItems);
 
     /**
      * @NOTE -- since rows may have different length,
