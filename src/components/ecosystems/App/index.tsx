@@ -34,6 +34,15 @@ import * as Styles from './styles';
 export const NUM_ROWS = 2;
 export const ROW_LENGTH = 5;
 
+/**
+ * @NOTE -- while this is in `.env`, it creates a false-positive
+ *  (i.e., test condition logs out as `false` but executes anyway)
+ *  which defeats the purpose of having this flag
+ *\/
+  export const GRID_SCROLL =  process.env.REACT_APP_GRID_SCROLL ?? false;
+ */
+export const GRID_SCROLL = false;
+
 export type RowRefType<T = HTMLDivElement> = React.MutableRefObject<T>;
 
 export const App = () => {
@@ -64,13 +73,11 @@ export const App = () => {
     refMap.push(group);
   }
 
+  // store length of each row
   const itemsMap = useRef<number[]>([]);
 
-  // const itemsMap = useRef<Record<string, number>>({
-  //   q: 0,
-  //   results: 0
-  // });
-
+  // store x (horiz) position of each row, default to 0
+  const rowPosMap = useRef(Array(refMap.length).fill(0));
 
   const [mediaType, setMediaType] = useState<TMDBMediaType>(TMDBMediaType.movie)
 
@@ -154,14 +161,41 @@ export const App = () => {
     // newCoords.x = modWrap(newCoords.x, numItems);
 
     /**
-     * @NOTE -- since rows may have different length, we need to
-     */
+     * @NOTE -- since rows may have different length,
+     *\/
     newCoords.x = (
       newCoords.x >= itemsRef.current[newCoords.y].length
         ? itemsRef.current[newCoords.y].length - 1
         : modWrap(newCoords.x, itemsRef.current[newCoords.y].length)
-    );
+    );*/
 
+    /**
+     * @NOTE -- save horiz position per row
+     *  - if row changes, save prev horiz position
+     *  - if same row, save current horiz position
+     */
+    rowPosMap.current[y] = (newCoords.y !== y ? x : newCoords.x)
+
+    /**
+     * @NOTE -- grid scrolling
+     *  - if enabled, rails will focus as a 2D grid
+     *    - i.e., current horiz position is preserved during
+     *            vertical moves ([2,1] -> [2,2])
+     *  - if disabled, horiz position will be saved per row
+     *  - vertical moves will use save horiz position
+     *    (e.g., [2,1] -> [3,2])
+     *  - `disabled` corresponds to scrolling patterns of most streaming apps
+     *  - `enabled` is a more logical grid scroll
+     */
+    if(GRID_SCROLL || (newCoords.y === y)) {
+      newCoords.x = (
+        newCoords.x >= itemsRef.current[newCoords.y].length
+          ? itemsRef.current[newCoords.y].length - 1
+          : modWrap(newCoords.x, itemsRef.current[newCoords.y].length)
+      );
+      } else {
+        newCoords.x = rowPosMap.current[newCoords.y];
+      }
 
     coordsRef.current = { ...newCoords };
 
@@ -301,7 +335,7 @@ export const App = () => {
         });
 
         window.addEventListener('keydown', handleKeyDown);
-/*
+
         setTimeout(() => {
           if(!initialLoad.current) {
             const next = itemsRef.current[0][0] as HTMLAnchorElement;
@@ -310,7 +344,7 @@ export const App = () => {
             next?.focus();
             initialLoad.current = true;
           }
-        }, 0);*/
+        }, 0);
       }
 
       return () => {
