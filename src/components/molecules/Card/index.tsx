@@ -11,16 +11,20 @@ export const isMovie = (arg: CardType): arg is MovieWithMediaType =>
   'title' in arg;
 
 const TMDB_HOST = process.env.REACT_APP_TMDB_HOST;
+const TMDB_IMAGE_SRC = process.env.REACT_APP_TMDB_IMAGE_SRC?.replace('%%WIDTH%%', '500');
 
 export const Card: React.FC<CardProps> = ({ children, data, tag = Tags.a }) => {
   const name = isTV(data) ? data?.name : data.title;
   const href = `${TMDB_HOST}/${data.media_type}/${data.id}`;
+  const src = TMDB_IMAGE_SRC?.replace('%%PATH%%', data.poster_path);
+
+  const ariaLabel = `${name} - Opens in a New Window`;
 
   return (
-    <Styles.StyledCard as={tag} href={href} target="_blank" aria-label={name}>
+    <Styles.StyledCard as={tag} href={href} target="_blank" aria-label={ariaLabel}>
       <Styles.CardContent>
         <Styles.CardImage
-          src={`https://www.themoviedb.org/t/p/w500${data.poster_path}`}
+          src={src}
           alt={name}
           height="100%"
         />
