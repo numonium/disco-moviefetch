@@ -338,10 +338,12 @@ export const App = () => {
     []
   );
 
-  const rows = resultChunks.map((chunk, i) => (
+  const rows = resultChunks.map((data, i) => (
+    // since `QueryBox` is refMap[0], we need to increment the index
+    // for the ref we want
     <Rail data-row={i} key={i} ref={refMap[i + 1]}>
       {renderItems({
-        data: chunk
+        data
       })}
     </Rail>
   ));
