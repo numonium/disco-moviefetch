@@ -5,7 +5,7 @@ export const arrayChunk = <T>(ary: Array<T>, chunkSize = 5) => {
     // do whatever
   }
   return chunks;
-}
+};
 
 export const arrayFirst = <T>(ary: Array<T>) =>
   ary.find((x) => x !== undefined);

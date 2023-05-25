@@ -1,5 +1,13 @@
 import throttle from 'lodash.throttle';
-import { MouseEventHandler, createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  MouseEventHandler,
+  createRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import {
   MovieWithMediaType,
   TVWithMediaType,
@@ -58,7 +66,7 @@ export const App = () => {
 
   const createGroup = () => {
     return createRef() as RowRefType;
-  }
+  };
 
   const refMap: Array<RowRefType> = [
     createGroup(), // query box
@@ -71,11 +79,14 @@ export const App = () => {
 
   // store x (horiz) position of each row, default to 0
   const rowPosMap = useRef(Array(refMap.length).fill(0));
-  const [mediaType, setMediaType] = useState<TMDBMediaType>(TMDBMediaType.movie)
+  const [mediaType, setMediaType] = useState<TMDBMediaType>(
+    TMDBMediaType.movie
+  );
 
-  const mediaTypeLabel = useMemo(() => (
-    mediaType === TMDBMediaType.movie ? 'Movie' : 'TV Show'
-  ),[mediaType])
+  const mediaTypeLabel = useMemo(
+    () => (mediaType === TMDBMediaType.movie ? 'Movie' : 'TV Show'),
+    [mediaType]
+  );
 
   const [results, setResults] = useState<CardType[]>([]);
   const [resultChunks, setResultChunks] = useState<CardType[][]>([]);
@@ -127,11 +138,11 @@ export const App = () => {
     };
 
     if (dir === TabbableNavDirections.down) {
-      if(WRAP_SCROLL || (newCoords.y < numRows - 1)) {
+      if (WRAP_SCROLL || newCoords.y < numRows - 1) {
         newCoords.y = newCoords.y + 1;
       }
     } else if (dir === TabbableNavDirections.up) {
-      if(WRAP_SCROLL || (newCoords.y > 0)) {
+      if (WRAP_SCROLL || newCoords.y > 0) {
         newCoords.y = newCoords.y - 1;
       }
     } else if (
@@ -146,21 +157,11 @@ export const App = () => {
     newCoords.y = modWrap(newCoords.y, numRows);
 
     /**
-     * @NOTE -- since rows may have different length,
-     *  we need
-     *\/
-    newCoords.x = (
-      newCoords.x >= itemsRef.current[newCoords.y].length
-        ? itemsRef.current[newCoords.y].length - 1
-        : modWrap(newCoords.x, itemsRef.current[newCoords.y].length)
-    );*/
-
-    /**
      * @NOTE -- save horiz position per row
      *  - if row changes, save prev horiz position
      *  - if same row, save current horiz position
      */
-    rowPosMap.current[y] = (newCoords.y !== y ? x : newCoords.x)
+    rowPosMap.current[y] = newCoords.y !== y ? x : newCoords.x;
 
     /**
      * @NOTE -- grid scrolling
@@ -173,16 +174,16 @@ export const App = () => {
      *  - `disabled` corresponds to scrolling patterns of most streaming apps
      *  - `enabled` is a more logical grid scroll
      */
-    if(GRID_SCROLL || (newCoords.y === y)) {
-      newCoords.x = (
-        WRAP_SCROLL && (newCoords.x >= itemsRef.current[newCoords.y].length)
+    if (GRID_SCROLL || newCoords.y === y) {
+      newCoords.x =
+        WRAP_SCROLL && newCoords.x >= itemsRef.current[newCoords.y].length
           ? itemsRef.current[newCoords.y].length - 1
-          : modWrap(newCoords.x, itemsRef.current[newCoords.y].length)
-      );
-      } else {
-        newCoords.x = rowPosMap.current[newCoords.y];
-      }
+          : modWrap(newCoords.x, itemsRef.current[newCoords.y].length);
+    } else {
+      newCoords.x = rowPosMap.current[newCoords.y];
+    }
 
+    // update current position
     coordsRef.current = { ...newCoords };
 
     const nextItem = itemsRef.current[newCoords.y][
@@ -222,11 +223,11 @@ export const App = () => {
     const target = e.target as HTMLButtonElement;
     const value = target.value as TMDBMediaType;
 
-    if(value !== mediaType) {
+    if (value !== mediaType) {
       setMediaType(target.value as TMDBMediaType);
       setReady(false);
     }
-  }
+  };
 
   useEffect(() => {
     const query = async (mediaType: TrendingMediaType) => {
@@ -242,23 +243,22 @@ export const App = () => {
           throw new Error('** api/tmdb // no results');
         }
 
-        const _results = mediaType === TMDBMediaType.movie
-          ? (res as MovieWithMediaType[])
-          : (res as TVWithMediaType[])
+        const _results =
+          mediaType === TMDBMediaType.movie
+            ? (res as MovieWithMediaType[])
+            : (res as TVWithMediaType[]);
 
-        const _chunks = arrayChunk<MovieWithMediaType | TVWithMediaType>(_results, ROW_LENGTH).slice(0, NUM_ROWS);
+        /**
+         * @NOTE -- the api response has both more pages and more items per page than we want, so let's trim it!
+         */
+        const _chunks = arrayChunk<MovieWithMediaType | TVWithMediaType>(
+          _results,
+          ROW_LENGTH
+        ).slice(0, NUM_ROWS);
 
         setResults(_results);
         setResultChunks(_chunks);
         setReady(true);
-
-        console.warn('** !!', {
-          _chunks,
-          resultChunks,
-          _results,
-          results,
-          refMap
-        })
 
         return data;
       } catch (err) {
@@ -267,14 +267,10 @@ export const App = () => {
       }
     };
 
-    if(!ready) {
+    if (!ready) {
       query(mediaType).then((data) => {
         setReady(true);
       });
-    }
-
-    return () => {
-      console.warn('** destroy', {...refMap})
     }
   }, [mediaType, results, ready]);
 
@@ -285,28 +281,26 @@ export const App = () => {
   useEffect(() => {
     if (ready) {
       if (refMap.length) {
-        for(let i = 0; i < refMap.length; i++) {
+        for (let i = 0; i < refMap.length; i++) {
           const val = refMap[i];
 
+          if (!val) {
+            continue;
+          }
+
           /* get tabbable elements from row */
-          itemsRef.current[i] = val.current.querySelectorAll(tabbableElements);
+          itemsRef.current[i] = val.current?.querySelectorAll(tabbableElements);
 
           // store length of row to allow for safe 2d nav
-          itemsMap.current[i] = itemsRef.current[i].length;
+          itemsMap.current[i] = itemsRef.current?.[i]?.length;
         }
-
-        console.warn('** refs/item', {
-          itemsMap,
-          itemsRef
-        });
 
         window.addEventListener('keydown', handleKeyDown);
 
         setTimeout(() => {
-          if(!initialLoad.current) {
+          if (!initialLoad.current) {
             const next = itemsRef.current[0][0] as HTMLAnchorElement;
 
-            console.warn('** refs/next', ready, next);
             next?.focus();
             initialLoad.current = true;
           }
@@ -344,6 +338,14 @@ export const App = () => {
     []
   );
 
+  const rows = resultChunks.map((chunk, i) => (
+    <Rail data-row={i} key={i} ref={refMap[i + 1]}>
+      {renderItems({
+        data: chunk
+      })}
+    </Rail>
+  ));
+
   return (
     <Content className="App">
       <FontStyle />
@@ -357,20 +359,7 @@ export const App = () => {
             {ready && results.length ? (
               <>
                 <h2>Trending {mediaTypeLabel}s</h2>
-                <Rail data-row ref={refMap[1]}>
-                  {
-                    renderItems({
-                      data: resultChunks[0]
-                    })
-                  }
-                </Rail>
-                <Rail data-row ref={refMap[2]}>
-                  {
-                    renderItems({
-                      data: resultChunks[1]
-                    })
-                  }
-                </Rail>
+                {rows}
               </>
             ) : ready ? (
               <strong>No {mediaTypeLabel} results!</strong>

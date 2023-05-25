@@ -1,4 +1,4 @@
-import { css, styled } from "styled-components";
+import { css, styled } from 'styled-components';
 
 export const QueryBox = styled.div`
   display: flex;
@@ -6,30 +6,30 @@ export const QueryBox = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: space-around;
-`
+`;
 
 const queryButtonHover = css`
-    background-color: rgba(255,255,255,.3);
-    /* background-color: yellow; */
-    cursor: pointer;
-`
+  background-color: rgba(255, 255, 255, 0.3);
+  /* background-color: yellow; */
+  cursor: pointer;
+`;
 
 export const QueryButton = styled.button<{
   $selected?: boolean;
 }>`
   display: inline-block;
   appearance: none;
-  margin: .5em 1em 0;
-  padding: .25em 1em .5em;
+  margin: 0.5em 1em 0;
+  padding: 0.25em 1em 0.5em;
   font-size: 1.25rem;
   line-height: 1;
-  background-color: rgba(255,255,255,0);
+  background-color: rgba(255, 255, 255, 0);
   color: #fafafa;
-  border: solid 2px rgba(255,255,255,.8);
+  border: solid 2px rgba(255, 255, 255, 0.8);
   border-radius: 12px;
 
   /* &:hover, */
-  ${({$selected}) => $selected && queryButtonHover}
+  ${({ $selected }) => $selected && queryButtonHover}
 
   &:hover {
     ${queryButtonHover}
